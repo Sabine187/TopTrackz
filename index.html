@@ -10,7 +10,74 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon.png" />
   <style>
-    /* (CSS bleibt gleich wie vorher – ausgelassen für Übersicht) */
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(180deg, #0e0e0e, #1e1e1e);
+      color: white;
+      overflow: hidden;
+    }
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .active {
+      display: flex;
+      z-index: 1;
+    }
+    h1, h2, h3 {
+      margin: 20px 0;
+      text-align: center;
+    }
+    button {
+      background-color: #1DB954;
+      border: none;
+      border-radius: 25px;
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: white;
+      width: 80%;
+      max-width: 300px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, transform 0.1s;
+      margin: 10px 0;
+    }
+    button:hover {
+      background-color: #1ed760;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    input {
+      padding: 12px;
+      width: 80%;
+      max-width: 300px;
+      margin: 8px 0;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: none;
+      text-align: center;
+      background-color: #2c2c2c;
+      color: white;
+    }
+    #scores {
+      margin-top: 30px;
+      line-height: 1.6em;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -20,7 +87,30 @@
     <div id="debug-token"></div>
   </div>
 
-  <!-- Spotify-Login Button -->
+  <div id="modeScreen" class="screen">
+    <h2>Wähle deinen Spielmodus</h2>
+    <button onclick="startSinglePlayer()">Einzelspieler</button>
+    <button onclick="goTo('multiplayerSetup')">Mehrspieler</button>
+  </div>
+
+  <div id="multiplayerSetup" class="screen">
+    <h2>Spielernamen eingeben</h2>
+    <input id="player1" placeholder="Spieler 1" />
+    <input id="player2" placeholder="Spieler 2" />
+    <input id="player3" placeholder="Spieler 3" />
+    <input id="player4" placeholder="Spieler 4" />
+    <input id="player5" placeholder="Spieler 5" />
+    <button onclick="startMultiplayerGame()">Spiel starten</button>
+  </div>
+
+  <div id="gameScreen" class="screen">
+    <h2 id="currentPlayer"></h2>
+    <div id="scores"></div>
+    <button onclick="playSong()">🎵 Abspielen</button>
+    <button onclick="markCorrect()">✅ Erraten</button>
+    <button onclick="markWrong()">❌ Nicht erraten</button>
+  </div>
+
   <div id="spotify-login">
     <button id="spotifyButton">Mit Spotify verbinden</button>
   </div>
@@ -111,11 +201,68 @@
       }
     };
 
+    let players = [];
+    let scores = [];
+    let currentIndex = 0;
+
     function goTo(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
     }
+
+    function startSinglePlayer() {
+      players = ["Spieler"];
+      scores = [0];
+      currentIndex = 0;
+      updateGameScreen();
+      goTo("gameScreen");
+    }
+
+    function startMultiplayerGame() {
+      players = [];
+      scores = [];
+      for (let i = 1; i <= 5; i++) {
+        const name = document.getElementById(`player${i}`).value.trim();
+        if (name) {
+          players.push(name);
+          scores.push(0);
+        }
+      }
+      if (players.length > 0) {
+        currentIndex = 0;
+        updateGameScreen();
+        goTo("gameScreen");
+      }
+    }
+
+    function updateGameScreen() {
+      document.getElementById("currentPlayer").textContent = `${players[currentIndex]} ist dran!`;
+      let html = "";
+      players.forEach((p, i) => {
+        html += `${p}: ${scores[i]} Punkte\n`;
+      });
+      document.getElementById("scores").textContent = html;
+    }
+
+    function playSong() {
+      alert("Song würde jetzt abgespielt werden 🎵");
+    }
+
+    function markCorrect() {
+      scores[currentIndex]++;
+      nextPlayer();
+    }
+
+    function markWrong() {
+      nextPlayer();
+    }
+
+    function nextPlayer() {
+      currentIndex = (currentIndex + 1) % players.length;
+      updateGameScreen();
+    }
   </script>
 </body>
 </html>
+
 
