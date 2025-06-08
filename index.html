@@ -94,6 +94,50 @@
       font-size: 1rem;
       color: #aaa;
     }
+    #menu-icon {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      user-select: none;
+      z-index: 2;
+    }
+    #scoreMenu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 10;
+    }
+    #scoreMenu h2 {
+      margin-bottom: 20px;
+    }
+    #scoreMenu table {
+      width: 90%;
+      max-width: 300px;
+      border-collapse: collapse;
+      color: white;
+    }
+    #scoreMenu td, #scoreMenu th {
+      padding: 10px;
+      border-bottom: 1px solid #444;
+      text-align: left;
+    }
+    #closeMenu {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+    }
     #spotify-login {
       position: fixed;
       bottom: 20px;
@@ -145,12 +189,19 @@
   </div>
 
   <div id="gameScreen" class="screen">
+    <div id="menu-icon" onclick="openScoreMenu()">☰</div>
     <div id="roundCounter"></div>
     <h2 id="currentPlayer"></h2>
     <div id="scores"></div>
     <button class="btn-gray" style="margin-bottom: 30px;" onclick="playSong()">Abspielen</button>
     <button class="btn-green" onclick="markCorrect()">Erraten</button>
     <button class="btn-red" onclick="markWrong()">Nicht erraten</button>
+  </div>
+
+  <div id="scoreMenu">
+    <div id="closeMenu" onclick="closeScoreMenu()">✕</div>
+    <h2>Punktestand</h2>
+    <table id="scoreTable"></table>
   </div>
 
   <div id="spotify-login">
@@ -305,6 +356,19 @@
         round++;
       }
       updateGameScreen();
+    }
+
+    function openScoreMenu() {
+      const table = document.getElementById("scoreTable");
+      table.innerHTML = "<tr><th>Spieler</th><th>Punkte</th></tr>";
+      players.forEach((p, i) => {
+        table.innerHTML += `<tr><td>${p}</td><td>${scores[i]}</td></tr>`;
+      });
+      document.getElementById("scoreMenu").style.display = "flex";
+    }
+
+    function closeScoreMenu() {
+      document.getElementById("scoreMenu").style.display = "none";
     }
   </script>
 </body>
