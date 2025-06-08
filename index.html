@@ -27,19 +27,29 @@
 
   <script>
     const CLIENT_ID = "9fb9db7417034d34971b1defb719cdc8";
-    const REDIRECT_URI = "https://sabine187.github.io/TopTrackz/callback.html";
+    const REDIRECT_URI = "https://sabine187.github.io/TopTrackz/";
     const SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state";
 
     document.getElementById("spotifyButton").addEventListener("click", function () {
       const authEndpoint = "https://accounts.spotify.com/authorize";
       const url = `${authEndpoint}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&response_type=token&show_dialog=true`;
-      console.log("Weiterleiten zu Spotify Auth:", url);
       window.location.href = url;
     });
 
     function showDebugToken() {
       const token = localStorage.getItem("spotify_access_token");
       document.getElementById("debug-token").textContent = token ? "Token gespeichert ✅" : "Kein Token ❌";
+    }
+
+    // Wenn ein access_token in der URL ist, speichern und bereinigen
+    if (window.location.hash.includes("access_token")) {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const token = params.get("access_token");
+      if (token) {
+        localStorage.setItem("spotify_access_token", token);
+        window.location.hash = ""; // URL bereinigen
+      }
     }
 
     if (window.location.hash === "#reset") {
