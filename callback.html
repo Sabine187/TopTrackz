@@ -2,8 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spotify Callback</title>
+  <title>Redirect...</title>
   <script>
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
@@ -11,14 +10,13 @@
 
     if (accessToken) {
       localStorage.setItem("spotify_access_token", accessToken);
-      // Stelle sicher, dass du zur vollständigen URL zurückleitest:
-      window.location.replace("https://sabine187.github.io/TopTrackz/");
-    } else {
-      document.body.innerHTML = '<h2>Fehler: Kein Zugriffstoken gefunden.</h2>';
     }
+    // Direkt unsichtbar weiterleiten zur App
+    window.location.replace("https://sabine187.github.io/TopTrackz/");
   </script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #000; }
+  </style>
 </head>
-<body>
-  <h2>Verarbeite Spotify-Login...</h2>
-</body>
+<body></body>
 </html>
