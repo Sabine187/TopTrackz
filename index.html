@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>TopTrackz</title>
-  <!-- iOS Web-App Vollbildmodus -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="TopTrackz" />
@@ -141,7 +140,22 @@
     <div id="scores"></div>
   </div>
 
+  <!-- Spotify Login -->
+  <div style="position: fixed; bottom: 20px; right: 20px;">
+    <button onclick="loginWithSpotify()" style="background-color: #4267B2;">Mit Spotify verbinden</button>
+  </div>
+
   <script>
+    const CLIENT_ID = "9fb9db7417034d34971b1defb719cdc8";
+    const REDIRECT_URI = "https://sabine187.github.io/TopTrackz/callback.html";
+    const SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state";
+
+    function loginWithSpotify() {
+      const authEndpoint = "https://accounts.spotify.com/authorize";
+      const url = `${authEndpoint}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&response_type=token&show_dialog=true`;
+      window.location.href = url;
+    }
+
     let players = [];
     let scores = {};
     let currentIndex = 0;
@@ -186,7 +200,29 @@
     }
 
     function playSong() {
-      document.getElementById('songInfo').textContent = 'Beispiel-Song läuft...';
+      const token = localStorage.getItem("spotify_access_token");
+      if (!token) {
+        alert("Bitte zuerst mit Spotify verbinden.");
+        return;
+      }
+      // Beispiel: Random Track ID (später dynamisch machen)
+      const trackUri = "spotify:track:7ouMYWpwJ422jRcDASZB7P";
+      fetch("https://api.spotify.com/v1/me/player/play", {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ uris: [trackUri] })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Fehler beim Abspielen");
+        document.getElementById('songInfo').textContent = 'Song läuft...';
+      })
+      .catch(err => {
+        alert("Fehler: Stelle sicher, dass ein Spotify-Gerät aktiv ist.");
+        console.error(err);
+      });
     }
 
     function submitGuess(correct) {
@@ -204,4 +240,3 @@
   </script>
 </body>
 </html>
-
