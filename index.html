@@ -242,6 +242,14 @@
       scoreDiv.innerHTML = '<h3>Punktestand</h3>' +
         players.map(p => `${p}: ${scores[p]} Punkte`).join('<br>');
     }
+
+    // Beim Laden prüfen, ob Token da ist → direkt zum Modus-Bildschirm springen
+    window.onload = function () {
+      const token = localStorage.getItem("spotify_access_token");
+      if (token) {
+        goTo("modeScreen");
+      }
+    };
   </script>
 </body>
 </html>
