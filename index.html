@@ -243,10 +243,11 @@
         players.map(p => `${p}: ${scores[p]} Punkte`).join('<br>');
     }
 
-    // RESET bei #reset in der URL
+    // RESET bei #reset in der URL (mit Bereinigung!)
     if (window.location.hash === "#reset") {
       localStorage.removeItem("spotify_access_token");
-      window.location.replace("https://sabine187.github.io/TopTrackz/");
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.location.replace(cleanUrl);
     }
 
     // Wenn Token da → direkt zur Moduswahl
