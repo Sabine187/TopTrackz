@@ -300,8 +300,9 @@
     if (code) {
       exchangeToken(code);
     }
-  </script>
-</body>
-</html>
-
-
+<script>
+  function goTo(screenId) {
+    document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+    document.getElementById(screenId).classList.add("active");
+  }
+</script>
