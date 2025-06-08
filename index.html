@@ -2,55 +2,81 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>TopTrackz</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
+    /* Vollbild & zentriert */
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%;
+      background-color: #111;
       color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      height: 100vh;
-      margin: 0;
+      align-items: center;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent; /* Entfernt blauen Rahmen bei Tap */
     }
+
     h1 {
-      font-size: 3em;
-      margin-bottom: 30px;
+      font-size: 3.5rem;
+      margin-bottom: 2rem;
+      user-select: none;
     }
+
     button {
-      padding: 15px 30px;
-      font-size: 1.2em;
       background-color: #1DB954;
-      color: white;
       border: none;
-      border-radius: 30px;
+      border-radius: 40px;
+      padding: 18px 36px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
       cursor: pointer;
-      transition: background-color 0.3s;
+      box-shadow: 0 6px 12px rgba(29,185,84,0.5);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+      user-select: none;
+      width: 80vw;
+      max-width: 350px;
     }
-    button:hover {
-      background-color: #1ed760;
+
+    button:active {
+      background-color: #1aa34a;
+      box-shadow: 0 3px 6px rgba(29,185,84,0.7);
     }
+
     #message {
-      margin-top: 20px;
-      font-size: 1.1em;
+      margin-top: 1.8rem;
+      font-size: 1.2rem;
       color: #ccc;
+      min-height: 1.5rem;
+      user-select: none;
+    }
+
+    /* Für Smartphones im Hochformat */
+    @media (orientation: portrait) {
+      h1 {
+        font-size: 4rem;
+      }
+      button {
+        font-size: 2rem;
+        padding: 20px 40px;
+      }
     }
   </style>
 </head>
 <body>
   <h1>TopTrackz</h1>
-  <button id="playBtn">🎵 Zufälligen Song abspielen</button>
-  <div id="message"></div>
+  <button id="playBtn" aria-label="Zufälligen Song abspielen">🎵 Zufälligen Song abspielen</button>
+  <div id="message" role="status" aria-live="polite"></div>
 
   <script>
-    // Füge EventListener statt onclick in HTML-Attribut ein
-    document.getElementById('playBtn').addEventListener('click', function() {
-      document.getElementById('message').textContent = "🎶 Spotify würde jetzt einen zufälligen Song abspielen! (Demo-Modus)";
+    document.getElementById('playBtn').addEventListener('click', () => {
+      const msg = "🎶 Spotify würde jetzt einen zufälligen Song abspielen! (Demo-Modus)";
+      document.getElementById('message').textContent = msg;
     });
   </script>
 </body>
 </html>
-
