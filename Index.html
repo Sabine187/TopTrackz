@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TopTrackz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      font-size: 3em;
+      margin-bottom: 30px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      background-color: #1DB954;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #1ed760;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 1.1em;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>TopTrackz</h1>
+  <button id="playBtn">🎵 Zufälligen Song abspielen</button>
+  <div id="message"></div>
+
+  <script>
+    // Füge EventListener statt onclick in HTML-Attribut ein
+    document.getElementById('playBtn').addEventListener('click', function() {
+      document.getElementById('message').textContent = "🎶 Spotify würde jetzt einen zufälligen Song abspielen! (Demo-Modus)";
+    });
+  </script>
+</body>
+</html>
+
