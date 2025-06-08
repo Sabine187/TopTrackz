@@ -5,100 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TopTrackz</title>
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: black;
-      color: white;
-    }
-    .screen {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      padding: 2rem;
-    }
-    .active {
-      display: flex;
-    }
-    button {
-      margin: 1rem;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 10px;
-      background-color: #1db954;
-      color: white;
-      cursor: pointer;
-    }
-    input {
-      padding: 0.5rem;
-      margin: 0.5rem;
-      border-radius: 5px;
-      border: none;
-      font-size: 1rem;
-    }
+    body { font-family: sans-serif; text-align: center; margin: 0; padding: 0; background: #111; color: white; }
+    .screen { display: none; padding: 20px; }
+    .active { display: block; }
+    button { padding: 10px 20px; margin: 10px; font-size: 1.2em; border: none; border-radius: 10px; background-color: #1db954; color: white; cursor: pointer; }
+    input { font-size: 1.2em; margin: 5px; padding: 5px; border-radius: 5px; border: none; }
   </style>
 </head>
 <body>
-  <!-- Start Screen -->
+  <!-- Startseite -->
   <div id="startScreen" class="screen active">
     <h1>TopTrackz</h1>
     <button onclick="goTo('modeScreen')">Start</button>
   </div>
 
-  <!-- Mode Selection Screen -->
+  <!-- Modus-Auswahl -->
   <div id="modeScreen" class="screen">
-    <h2>Modus wählen</h2>
-    <button onclick="goTo('singleplayerScreen')">Einzelspieler</button>
+    <h2>Wähle den Spielmodus</h2>
+    <button onclick="startSingleplayer()">Einzelspieler</button>
     <button onclick="goTo('multiplayerScreen')">Mehrspieler</button>
   </div>
 
-  <!-- Multiplayer Names Screen -->
+  <!-- Spielernamen eingeben -->
   <div id="multiplayerScreen" class="screen">
-    <h2>Spieler eingeben</h2>
-    <div id="playerInputs">
-      <input type="text" placeholder="Spieler 1" />
-      <input type="text" placeholder="Spieler 2" />
+    <h2>Spielernamen eingeben</h2>
+    <div>
+      <input id="player1" placeholder="Spieler 1" /><br />
+      <input id="player2" placeholder="Spieler 2 (optional)" /><br />
+      <input id="player3" placeholder="Spieler 3 (optional)" /><br />
+      <input id="player4" placeholder="Spieler 4 (optional)" /><br />
+      <input id="player5" placeholder="Spieler 5 (optional)" /><br />
     </div>
-    <button onclick="startGame()">Spiel starten</button>
+    <button onclick="startMultiplayer()">Starten</button>
   </div>
 
-  <!-- Game Screen -->
+  <!-- Spielseite -->
   <div id="gameScreen" class="screen">
-    <h2 id="playerTurn">Spieler ist dran</h2>
-    <button onclick="nextPlayer()">Nächster Spieler</button>
-    <p>Song kommt später hier</p>
+    <h2 id="currentPlayer">Spieler</h2>
+    <div id="songInfo">[Song wird hier später angezeigt]</div>
+
+    <div>
+      <button onclick="playSong()">▶️ Abspielen</button>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button onclick="submitGuess(true)">Erraten</button>
+      <button onclick="submitGuess(false)" style="background-color: #e74c3c;">Nicht erraten</button>
+    </div>
+
+    <div id="scores" style="margin-top: 20px;"></div>
   </div>
 
   <script>
-    const screens = ["startScreen", "modeScreen", "multiplayerScreen", "gameScreen"];
     let players = [];
-    let currentPlayerIndex = 0;
+    let scores = {};
+    let currentIndex = 0;
 
     function goTo(screenId) {
-      screens.forEach(id => {
-        document.getElementById(id).classList.remove("active");
-      });
-      document.getElementById(screenId).classList.add("active");
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function startSingleplayer() {
+      players = ['Du'];
+      scores = { 'Du': 0 };
+      startGame();
+    }
+
+    function startMultiplayer() {
+      players = [];
+      for (let i = 1; i <= 5; i++) {
+        const name = document.getElementById(`player${i}`).value.trim();
+        if (name) players.push(name);
+      }
+      if (players.length === 0) {
+        alert('Bitte mindestens einen Spielernamen eingeben.');
+        return;
+      }
+      scores = {};
+      players.forEach(name => scores[name] = 0);
+      startGame();
     }
 
     function startGame() {
-      const inputs = document.querySelectorAll("#playerInputs input");
-      players = Array.from(inputs).map(input => ({ name: input.value || "Spieler", score: 0 }));
-      currentPlayerIndex = 0;
-      updatePlayerTurn();
-      goTo("gameScreen");
+      currentIndex = 0;
+      updateGameScreen();
+      goTo('gameScreen');
     }
 
-    function updatePlayerTurn() {
-      document.getElementById("playerTurn").innerText = `${players[currentPlayerIndex].name} ist dran`;
+    function updateGameScreen() {
+      const current = players[currentIndex];
+      document.getElementById('currentPlayer').textContent = `Jetzt spielt: ${current}`;
+      document.getElementById('songInfo').textContent = '[Song wird geladen...]';
+      updateScores();
     }
 
-    function nextPlayer() {
-      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
-      updatePlayerTurn();
+    function playSong() {
+      // Platzhalter – hier würde später ein Spotify-Track abgespielt
+      document.getElementById('songInfo').textContent = '🎵 Beispiel-Song läuft...';
+    }
+
+    function submitGuess(correct) {
+      const player = players[currentIndex];
+      if (correct) scores[player] += 1;
+      currentIndex = (currentIndex + 1) % players.length;
+      updateGameScreen();
+    }
+
+    function updateScores() {
+      const scoreDiv = document.getElementById('scores');
+      scoreDiv.innerHTML = '<h3>Punktestand:</h3>' +
+        players.map(p => `${p}: ${scores[p]} Punkte`).join('<br>');
     }
   </script>
 </body>
