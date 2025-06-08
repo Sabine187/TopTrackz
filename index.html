@@ -35,7 +35,7 @@
     }
     .active {
       display: flex;
-      z-index: 10;
+      z-index: 1;
     }
     h1, h2, h3 {
       margin: 20px 0;
@@ -96,6 +96,12 @@
     .mode-buttons button {
       margin: 15px 0;
     }
+    #spotify-login {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
@@ -141,7 +147,7 @@
   </div>
 
   <!-- Spotify Login -->
-  <div style="position: fixed; bottom: 20px; right: 20px;">
+  <div id="spotify-login">
     <button onclick="loginWithSpotify()" style="background-color: #4267B2;">Mit Spotify verbinden</button>
   </div>
 
@@ -205,7 +211,6 @@
         alert("Bitte zuerst mit Spotify verbinden.");
         return;
       }
-      // Beispiel: Random Track ID (später dynamisch machen)
       const trackUri = "spotify:track:7ouMYWpwJ422jRcDASZB7P";
       fetch("https://api.spotify.com/v1/me/player/play", {
         method: "PUT",
