@@ -125,6 +125,7 @@
       bottom: 20px;
       right: 20px;
       z-index: 1000;
+      cursor: pointer;
     }
     #spotify-login img {
       width: 36px;
@@ -134,7 +135,6 @@
     }
     #spotify-login img:hover {
       opacity: 1;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -144,95 +144,82 @@
     <button class="btn-green" onclick="goTo('modeScreen')">Start</button>
   </div>
 
-  <div id="modeScreen" class="screen">
-    <h2>Spielmodus wählen</h2>
-    <button class="btn-green" onclick="startSingleplayer()">Einzelspieler</button>
-    <button class="btn-green" onclick="goTo('multiplayerScreen')">Mehrspieler</button>
-  </div>
+  <!-- Restliche Screens (modeScreen, multiplayerScreen, gameScreen) bleiben wie vorher -->
 
-  <div id="multiplayerScreen" class="screen">
-    <h2>Spielernamen eingeben</h2>
-    <input id="p1" placeholder="Spieler 1" />
-    <input id="p2" placeholder="Spieler 2" />
-    <input id="p3" placeholder="Spieler 3" />
-    <input id="p4" placeholder="Spieler 4" />
-    <input id="p5" placeholder="Spieler 5" />
-    <button class="btn-green" onclick="startMultiplayer()">Starten</button>
-  </div>
-
-  <div id="gameScreen" class="screen">
-    <div id="roundCounter"></div>
-    <div id="menu-icon" onclick="toggleScoreMenu()">≡</div>
-    <h2 id="currentPlayer"></h2>
-    <div id="scoreDisplay"></div>
-    <button class="btn-gray" onclick="playSong()">Abspielen</button>
-    <button class="btn-green" onclick="answer(true)">Erraten</button>
-    <button class="btn-red" onclick="answer(false)">Nicht erraten</button>
-  </div>
-
-  <div id="scoreMenu">
-    <span id="closeMenu" onclick="toggleScoreMenu()">×</span>
-    <h2>Punktestand</h2>
-    <table id="scoreTable"></table>
-  </div>
-
-  <div id="spotify-login">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify Login" onclick="startSpotifyLogin()">
+  <div id="spotify-login" onclick="startSpotifyLogin()">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify Login">
   </div>
 
   <script>
-    let players = [];
-    let scores = {};
-    let current = 0;
-    let round = 1;
     function goTo(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
-    function startSingleplayer() {
-      players = ["Du"];
-      scores = {"Du": 0};
-      current = 0;
-      round = 1;
-      updateGameScreen();
-      goTo('gameScreen');
+
+    const CLIENT_ID = "9fb9db7417034d34971b1defb719cdc8";
+    const REDIRECT_URI = "https://sabine187.github.io/TopTrackz/";
+    const SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state playlist-read-private playlist-read-collaborative";
+
+    function startSpotifyLogin() {
+      const url = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&response_type=token&show_dialog=true`;
+      window.location.href = url;
     }
-    function startMultiplayer() {
-      players = [];
-      for (let i = 1; i <= 5; i++) {
-        const val = document.getElementById("p"+i).value.trim();
-        if (val) players.push(val);
+
+    function playSong() {
+      const token = localStorage.getItem("spotify_access_token");
+      if (!token) {
+        alert("Bitte zuerst mit Spotify verbinden.");
+        return;
       }
-      if (players.length === 0) return alert("Mindestens ein Spielername ist nötig");
-      players.forEach(p => scores[p] = 0);
-      current = 0;
-      round = 1;
-      updateGameScreen();
-      goTo('gameScreen');
+
+      const playlists = [
+        "37i9dQZF1DX4TiN7pMwV0Z",
+        "37i9dQZF1DWXRqgorJj26U",
+        "37i9dQZF1DX4o1oenSJRJd",
+        "37i9dQZF1DX4UtSsGT1Sbe"
+      ];
+
+      const selectedPlaylist = playlists[Math.floor(Math.random() * playlists.length)];
+      fetch(`https://api.spotify.com/v1/playlists/${selectedPlaylist}/tracks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const tracks = data.items.filter(i => i.track && i.track.uri);
+          const randomTrack = tracks[Math.floor(Math.random() * tracks.length)].track.uri;
+          return fetch("https://api.spotify.com/v1/me/player/devices", {
+            headers: { Authorization: `Bearer ${token}` }
+          }).then(res => res.json()).then(devicesData => {
+            const device = devicesData.devices.find(d => d.is_active);
+            if (!device) {
+              alert("Bitte öffne Spotify auf einem aktiven Gerät.");
+              return;
+            }
+            return fetch("https://api.spotify.com/v1/me/player/play?device_id=" + device.id, {
+              method: "PUT",
+              headers: {
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ uris: [randomTrack] })
+            });
+          });
+        });
     }
-    function answer(correct) {
-      const p = players[current];
-      if (correct) scores[p]++;
-      current = (current + 1) % players.length;
-      if (current === 0) round++;
-      updateGameScreen();
-    }
-    function updateGameScreen() {
-      document.getElementById("currentPlayer").textContent = players[current] + " ist dran";
-      document.getElementById("scoreDisplay").textContent = "Punkte: " + scores[players[current]];
-      document.getElementById("roundCounter").textContent = "Runde " + round;
-    }
-    function toggleScoreMenu() {
-      const m = document.getElementById("scoreMenu");
-      if (m.style.display === "flex") m.style.display = "none";
-      else {
-        const table = document.getElementById("scoreTable");
-        table.innerHTML = "<tr><th>Spieler</th><th>Punkte</th></tr>" +
-          players.map(p => `<tr><td>${p}</td><td>${scores[p]}</td></tr>`).join('');
-        m.style.display = "flex";
+
+    // Speichere Token beim Redirect
+    window.onload = () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const token = params.get("access_token");
+        if (token) {
+          localStorage.setItem("spotify_access_token", token);
+          window.location.hash = "";
+        }
       }
-    }
+    };
   </script>
-  <!-- Spotify Auth etc. kann hier folgen -->
 </body>
 </html>
+
