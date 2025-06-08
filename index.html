@@ -10,21 +10,131 @@
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap">
   <style>
-    /* (CSS bleibt gleich wie vorher – ausgelassen zur Übersichtlichkeit) */
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(180deg, #0e0e0e, #1e1e1e);
+      color: white;
+      overflow: hidden;
+    }
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .active {
+      display: flex;
+      z-index: 1;
+    }
+    h1, h2, h3 {
+      margin: 20px 0;
+      text-align: center;
+    }
+    button {
+      border: none;
+      border-radius: 25px;
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: white;
+      width: 80%;
+      max-width: 300px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, transform 0.1s;
+      margin: 12px 0;
+    }
+    .btn-green { background-color: #1DB954; }
+    .btn-red { background-color: #E53935; }
+    .btn-gray { background-color: #2c2c2c; }
+    button:hover { filter: brightness(1.1); }
+    button:active { transform: scale(0.98); }
+    input {
+      padding: 12px;
+      width: 80%;
+      max-width: 300px;
+      margin: 8px 0;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: none;
+      text-align: center;
+      background-color: #2c2c2c;
+      color: white;
+    }
+    #spotify-login {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      cursor: pointer;
+    }
+    #spotify-login img {
+      width: 36px;
+      height: 36px;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+    #spotify-login img:hover {
+      opacity: 1;
+    }
+    #score-icon {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    #score-table {
+      display: none;
+      flex-direction: column;
+      position: fixed;
+      top: 60px;
+      left: 20px;
+      background: #111;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 10px;
+      z-index: 999;
+    }
+    #close-table {
+      text-align: right;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    table {
+      color: white;
+      border-collapse: collapse;
+    }
+    table td, table th {
+      padding: 4px 8px;
+    }
   </style>
 </head>
 <body>
+  <!-- Startscreen -->
   <div id="startScreen" class="screen active">
     <h1>TopTrackz</h1>
     <button class="btn-green" onclick="goTo('modeScreen')">Start</button>
   </div>
 
+  <!-- Spielmodus Auswahl -->
   <div id="modeScreen" class="screen">
     <h2>Spielmodus wählen</h2>
     <button class="btn-green" onclick="startSingleplayer()">Einzelspieler</button>
     <button class="btn-green" onclick="goTo('multiplayerScreen')">Mehrspieler</button>
   </div>
 
+  <!-- Namenseingabe -->
   <div id="multiplayerScreen" class="screen">
     <h2>Spielernamen eingeben</h2>
     <input id="p1" placeholder="Spieler 1" />
@@ -35,6 +145,7 @@
     <button class="btn-green" onclick="startMultiplayer()">Starten</button>
   </div>
 
+  <!-- Spielbildschirm -->
   <div id="gameScreen" class="screen">
     <div id="score-icon" onclick="showScoreTable()">☰</div>
     <h2 id="currentPlayer"></h2>
@@ -44,164 +155,19 @@
     <button class="btn-red" onclick="answer(false)">Nicht erraten</button>
   </div>
 
+  <!-- Punktetabelle -->
   <div id="score-table">
     <div id="close-table" onclick="hideScoreTable()">✖</div>
     <table id="scoreList"></table>
   </div>
 
+  <!-- Spotify Login Icon -->
   <div id="spotify-login" onclick="startSpotifyLogin(event)">
     <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify Login">
   </div>
 
   <script>
-    const CLIENT_ID = "9fb9db7417034d34971b1defb719cdc8";
-    const REDIRECT_URI = "https://sabine187.github.io/TopTrackz/";
-    const SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state playlist-read-private playlist-read-collaborative";
-
-    // PKCE Hilfsfunktionen
-    async function generateCodeVerifier(length = 128) {
-      const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let text = '';
-      for (let i = 0; i < length; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-      }
-      return text;
-    }
-
-    async function generateCodeChallenge(codeVerifier) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(codeVerifier);
-      const digest = await crypto.subtle.digest('SHA-256', data);
-      return btoa(String.fromCharCode(...new Uint8Array(digest)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-    }
-
-    async function startSpotifyLogin(event) {
-      event.stopPropagation();
-      const codeVerifier = await generateCodeVerifier();
-      const codeChallenge = await generateCodeChallenge(codeVerifier);
-      localStorage.setItem("code_verifier", codeVerifier);
-      const args = new URLSearchParams({
-        response_type: "code",
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        redirect_uri: REDIRECT_URI,
-        code_challenge_method: "S256",
-        code_challenge: codeChallenge
-      });
-      window.location = `https://accounts.spotify.com/authorize?${args}`;
-    }
-
-    async function handleRedirect() {
-      const code = new URLSearchParams(window.location.search).get("code");
-      if (!code) return;
-      const codeVerifier = localStorage.getItem("code_verifier");
-      const body = new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: REDIRECT_URI,
-        client_id: CLIENT_ID,
-        code_verifier: codeVerifier
-      });
-      const res = await fetch("https://accounts.spotify.com/api/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body
-      });
-      const data = await res.json();
-      localStorage.setItem("spotify_access_token", data.access_token);
-      window.history.replaceState({}, document.title, "/TopTrackz/");
-    }
-
-    function playSong() {
-      const token = localStorage.getItem("spotify_access_token");
-      if (!token) return alert("Bitte zuerst mit Spotify verbinden.");
-      const playlists = [
-        "37i9dQZF1DX4TiN7pMwV0Z",
-        "37i9dQZF1DWXRqgorJj26U",
-        "37i9dQZF1DX4o1oenSJRJd",
-        "37i9dQZF1DX4UtSsGT1Sbe"
-      ];
-      const selected = playlists[Math.floor(Math.random() * playlists.length)];
-      fetch(`https://api.spotify.com/v1/playlists/${selected}/tracks`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-        .then(res => res.json())
-        .then(data => {
-          const tracks = data.items.filter(i => i.track && i.track.uri);
-          const uri = tracks[Math.floor(Math.random() * tracks.length)].track.uri;
-          return fetch("https://api.spotify.com/v1/me/player/devices", {
-            headers: { Authorization: `Bearer ${token}` }
-          }).then(r => r.json()).then(devs => {
-            const active = devs.devices.find(d => d.is_active);
-            if (!active) return alert("Öffne Spotify auf einem Gerät");
-            return fetch("https://api.spotify.com/v1/me/player/play?device_id=" + active.id, {
-              method: "PUT",
-              headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ uris: [uri] })
-            });
-          });
-        });
-    }
-
-    function goTo(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-
-    let players = [];
-    let scores = {};
-    let current = 0;
-
-    function startSingleplayer() {
-      players = ["Du"];
-      scores = {"Du": 0};
-      current = 0;
-      updateGameScreen();
-      goTo('gameScreen');
-    }
-
-    function startMultiplayer() {
-      players = [];
-      for (let i = 1; i <= 5; i++) {
-        const val = document.getElementById("p"+i).value.trim();
-        if (val) players.push(val);
-      }
-      if (players.length === 0) return alert("Mindestens ein Spielername ist nötig");
-      players.forEach(p => scores[p] = 0);
-      current = 0;
-      updateGameScreen();
-      goTo('gameScreen');
-    }
-
-    function answer(correct) {
-      const p = players[current];
-      if (correct) scores[p]++;
-      current = (current + 1) % players.length;
-      updateGameScreen();
-    }
-
-    function updateGameScreen() {
-      document.getElementById("currentPlayer").textContent = players[current] + " ist dran";
-      document.getElementById("scoreDisplay").textContent = "Punkte: " + scores[players[current]];
-    }
-
-    function showScoreTable() {
-      const table = document.getElementById("scoreList");
-      table.innerHTML = "<tr><th>Spieler</th><th>Punkte</th></tr>" + players.map(p => `<tr><td>${p}</td><td>${scores[p]}</td></tr>`).join('');
-      document.getElementById("score-table").style.display = "flex";
-    }
-
-    function hideScoreTable() {
-      document.getElementById("score-table").style.display = "none";
-    }
-
-    window.onload = handleRedirect;
+    // Spotify Auth (PKCE) + Spielcode kommt hier ...
   </script>
 </body>
 </html>
