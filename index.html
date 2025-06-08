@@ -89,9 +89,18 @@
     #spotify-login {
       position: fixed;
       bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      right: 20px;
       z-index: 1000;
+    }
+    #spotify-login img {
+      width: 36px;
+      height: 36px;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+    #spotify-login img:hover {
+      opacity: 1;
+      cursor: pointer;
     }
     #debug-token {
       position: fixed;
@@ -136,7 +145,7 @@
   </div>
 
   <div id="spotify-login">
-    <button class="btn-green" id="spotifyButton">Mit Spotify verbinden</button>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" alt="Spotify Login" onclick="startSpotifyLogin()">
   </div>
 
   <script>
@@ -163,14 +172,14 @@
         .replace(/=+$/, '');
     }
 
-    document.getElementById("spotifyButton").addEventListener("click", async function () {
+    async function startSpotifyLogin() {
       const codeVerifier = generateRandomString(128);
       const codeChallenge = await generateCodeChallenge(codeVerifier);
       localStorage.setItem('code_verifier', codeVerifier);
 
       const url = `https://accounts.spotify.com/authorize?response_type=code&client_id=${CLIENT_ID}&scope=${encodeURIComponent(SCOPES)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code_challenge_method=S256&code_challenge=${codeChallenge}`;
       window.location.href = url;
-    });
+    }
 
     async function exchangeToken(code) {
       const codeVerifier = localStorage.getItem('code_verifier');
