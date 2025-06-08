@@ -82,9 +82,17 @@
       color: white;
     }
     #scores {
-      margin-top: 30px;
+      margin-top: 20px;
       line-height: 1.6em;
       text-align: center;
+    }
+    #roundCounter {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      font-size: 1rem;
+      color: #aaa;
     }
     #spotify-login {
       position: fixed;
@@ -137,6 +145,7 @@
   </div>
 
   <div id="gameScreen" class="screen">
+    <div id="roundCounter"></div>
     <h2 id="currentPlayer"></h2>
     <div id="scores"></div>
     <button class="btn-gray" style="margin-bottom: 30px;" onclick="playSong()">Abspielen</button>
@@ -152,6 +161,11 @@
     const CLIENT_ID = "9fb9db7417034d34971b1defb719cdc8";
     const REDIRECT_URI = "https://sabine187.github.io/TopTrackz/";
     const SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state";
+
+    let players = [];
+    let scores = [];
+    let currentIndex = 0;
+    let round = 1;
 
     function generateRandomString(length) {
       let text = '';
@@ -234,10 +248,6 @@
       }
     };
 
-    let players = [];
-    let scores = [];
-    let currentIndex = 0;
-
     function goTo(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
@@ -247,6 +257,7 @@
       players = ["Spieler"];
       scores = [0];
       currentIndex = 0;
+      round = 1;
       updateGameScreen();
       goTo("gameScreen");
     }
@@ -263,6 +274,7 @@
       }
       if (players.length > 0) {
         currentIndex = 0;
+        round = 1;
         updateGameScreen();
         goTo("gameScreen");
       }
@@ -270,11 +282,8 @@
 
     function updateGameScreen() {
       document.getElementById("currentPlayer").textContent = `${players[currentIndex]} ist dran!`;
-      let html = "";
-      players.forEach((p, i) => {
-        html += `${p}: ${scores[i]} Punkte\n`;
-      });
-      document.getElementById("scores").textContent = html;
+      document.getElementById("scores").textContent = `Punkte: ${scores[currentIndex]}`;
+      document.getElementById("roundCounter").textContent = `Runde ${round}`;
     }
 
     function playSong() {
@@ -292,6 +301,9 @@
 
     function nextPlayer() {
       currentIndex = (currentIndex + 1) % players.length;
+      if (currentIndex === 0) {
+        round++;
+      }
       updateGameScreen();
     }
   </script>
