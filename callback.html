@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spotify Callback</title>
   <script>
-    // Token extrahieren aus URL (nach dem #)
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const accessToken = params.get("access_token");
 
     if (accessToken) {
       localStorage.setItem("spotify_access_token", accessToken);
-      window.location.href = "index.html"; // zurück zur App
+      // Stelle sicher, dass du zur vollständigen URL zurückleitest:
+      window.location.replace("https://sabine187.github.io/TopTrackz/");
     } else {
       document.body.innerHTML = '<h2>Fehler: Kein Zugriffstoken gefunden.</h2>';
     }
