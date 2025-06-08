@@ -2,81 +2,104 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TopTrackz</title>
   <style>
-    /* Vollbild & zentriert */
-    html, body {
-      margin: 0; padding: 0;
-      height: 100%;
-      background-color: #111;
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: black;
       color: white;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
+    }
+    .screen {
+      display: none;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      text-align: center;
-      -webkit-tap-highlight-color: transparent; /* Entfernt blauen Rahmen bei Tap */
+      justify-content: center;
+      height: 100vh;
+      padding: 2rem;
     }
-
-    h1 {
-      font-size: 3.5rem;
-      margin-bottom: 2rem;
-      user-select: none;
+    .active {
+      display: flex;
     }
-
     button {
-      background-color: #1DB954;
+      margin: 1rem;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
       border: none;
-      border-radius: 40px;
-      padding: 18px 36px;
-      font-size: 1.8rem;
-      font-weight: 700;
+      border-radius: 10px;
+      background-color: #1db954;
       color: white;
       cursor: pointer;
-      box-shadow: 0 6px 12px rgba(29,185,84,0.5);
-      transition: background-color 0.25s ease, box-shadow 0.25s ease;
-      user-select: none;
-      width: 80vw;
-      max-width: 350px;
     }
-
-    button:active {
-      background-color: #1aa34a;
-      box-shadow: 0 3px 6px rgba(29,185,84,0.7);
-    }
-
-    #message {
-      margin-top: 1.8rem;
-      font-size: 1.2rem;
-      color: #ccc;
-      min-height: 1.5rem;
-      user-select: none;
-    }
-
-    /* Für Smartphones im Hochformat */
-    @media (orientation: portrait) {
-      h1 {
-        font-size: 4rem;
-      }
-      button {
-        font-size: 2rem;
-        padding: 20px 40px;
-      }
+    input {
+      padding: 0.5rem;
+      margin: 0.5rem;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
     }
   </style>
 </head>
 <body>
-  <h1>TopTrackz</h1>
-  <button id="playBtn" aria-label="Zufälligen Song abspielen">🎵 Zufälligen Song abspielen</button>
-  <div id="message" role="status" aria-live="polite"></div>
+  <!-- Start Screen -->
+  <div id="startScreen" class="screen active">
+    <h1>TopTrackz</h1>
+    <button onclick="goTo('modeScreen')">Start</button>
+  </div>
+
+  <!-- Mode Selection Screen -->
+  <div id="modeScreen" class="screen">
+    <h2>Modus wählen</h2>
+    <button onclick="goTo('singleplayerScreen')">Einzelspieler</button>
+    <button onclick="goTo('multiplayerScreen')">Mehrspieler</button>
+  </div>
+
+  <!-- Multiplayer Names Screen -->
+  <div id="multiplayerScreen" class="screen">
+    <h2>Spieler eingeben</h2>
+    <div id="playerInputs">
+      <input type="text" placeholder="Spieler 1" />
+      <input type="text" placeholder="Spieler 2" />
+    </div>
+    <button onclick="startGame()">Spiel starten</button>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="gameScreen" class="screen">
+    <h2 id="playerTurn">Spieler ist dran</h2>
+    <button onclick="nextPlayer()">Nächster Spieler</button>
+    <p>Song kommt später hier</p>
+  </div>
 
   <script>
-    document.getElementById('playBtn').addEventListener('click', () => {
-      const msg = "🎶 Spotify würde jetzt einen zufälligen Song abspielen! (Demo-Modus)";
-      document.getElementById('message').textContent = msg;
-    });
+    const screens = ["startScreen", "modeScreen", "multiplayerScreen", "gameScreen"];
+    let players = [];
+    let currentPlayerIndex = 0;
+
+    function goTo(screenId) {
+      screens.forEach(id => {
+        document.getElementById(id).classList.remove("active");
+      });
+      document.getElementById(screenId).classList.add("active");
+    }
+
+    function startGame() {
+      const inputs = document.querySelectorAll("#playerInputs input");
+      players = Array.from(inputs).map(input => ({ name: input.value || "Spieler", score: 0 }));
+      currentPlayerIndex = 0;
+      updatePlayerTurn();
+      goTo("gameScreen");
+    }
+
+    function updatePlayerTurn() {
+      document.getElementById("playerTurn").innerText = `${players[currentPlayerIndex].name} ist dran`;
+    }
+
+    function nextPlayer() {
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+      updatePlayerTurn();
+    }
   </script>
 </body>
 </html>
