@@ -102,16 +102,24 @@
       right: 20px;
       z-index: 1000;
     }
+    #debug-token {
+      position: fixed;
+      top: 5px;
+      left: 5px;
+      font-size: 0.7rem;
+      color: #999;
+      max-width: 90vw;
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
-  <!-- Startseite -->
   <div id="startScreen" class="screen active">
     <h1>TopTrackz</h1>
     <button onclick="goTo('modeScreen')">Start</button>
+    <div id="debug-token"></div>
   </div>
 
-  <!-- Modus-Auswahl -->
   <div id="modeScreen" class="screen">
     <h2>Wähle den Spielmodus</h2>
     <div class="mode-buttons">
@@ -120,7 +128,6 @@
     </div>
   </div>
 
-  <!-- Spielernamen eingeben -->
   <div id="multiplayerScreen" class="screen">
     <h2>Spielernamen eingeben</h2>
     <input id="player1" placeholder="Spieler 1" />
@@ -131,7 +138,6 @@
     <button onclick="startMultiplayer()">Spiel starten</button>
   </div>
 
-  <!-- Spielseite -->
   <div id="gameScreen" class="screen">
     <h2 id="currentPlayer">Spieler ist dran</h2>
     <div id="songInfo" style="margin-top: 20px; font-size: 1.1rem;">[Song wird hier später angezeigt]</div>
@@ -146,7 +152,6 @@
     <div id="scores"></div>
   </div>
 
-  <!-- Spotify Login -->
   <div id="spotify-login">
     <button onclick="loginWithSpotify()" style="background-color: #4267B2;">Mit Spotify verbinden</button>
   </div>
@@ -161,6 +166,25 @@
       const url = `${authEndpoint}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}&response_type=token&show_dialog=true`;
       window.location.href = url;
     }
+
+    function showDebugToken() {
+      const token = localStorage.getItem("spotify_access_token");
+      document.getElementById("debug-token").textContent = token ? "Token gespeichert ✅" : "Kein Token ❌";
+    }
+
+    if (window.location.hash === "#reset") {
+      localStorage.removeItem("spotify_access_token");
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.location.replace(cleanUrl);
+    }
+
+    window.onload = function () {
+      const token = localStorage.getItem("spotify_access_token");
+      showDebugToken();
+      if (token) {
+        goTo("modeScreen");
+      }
+    };
 
     let players = [];
     let scores = {};
@@ -242,21 +266,6 @@
       scoreDiv.innerHTML = '<h3>Punktestand</h3>' +
         players.map(p => `${p}: ${scores[p]} Punkte`).join('<br>');
     }
-
-    // RESET bei #reset in der URL (mit Bereinigung!)
-    if (window.location.hash === "#reset") {
-      localStorage.removeItem("spotify_access_token");
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.location.replace(cleanUrl);
-    }
-
-    // Wenn Token da → direkt zur Moduswahl
-    window.onload = function () {
-      const token = localStorage.getItem("spotify_access_token");
-      if (token) {
-        goTo("modeScreen");
-      }
-    };
   </script>
 </body>
 </html>
