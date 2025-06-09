@@ -212,8 +212,17 @@ async function startSpotifyLogin(event) {
 
 async function handleRedirect() {
   const code = new URLSearchParams(window.location.search).get("code");
-  if (!code) return;
+  if (!code) {
+    console.log("🔁 Kein Code im Redirect gefunden");
+    return;
+  }
+  console.log("🔁 Code gefunden:", code);
   const codeVerifier = localStorage.getItem("code_verifier");
+  if (!codeVerifier) {
+    console.error("❌ Kein code_verifier gefunden. PKCE-Flow nicht vollständig.");
+    return;
+  }
+
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
@@ -221,13 +230,27 @@ async function handleRedirect() {
     client_id: CLIENT_ID,
     code_verifier: codeVerifier
   });
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body
-  });
-  const data = await res.json();
-  localStorage.setItem("spotify_access_token", data.access_token);
+
+  try {
+    const res = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+    const data = await res.json();
+    console.log("🎉 Token-Antwort von Spotify:", data);
+
+    if (data.access_token) {
+      localStorage.setItem("spotify_access_token", data.access_token);
+      document.getElementById("debug-token").textContent = "Token: ✅";
+    } else {
+      console.error("❌ Kein access_token erhalten. Antwort:", data);
+    }
+  } catch (err) {
+    console.error("❌ Fehler beim Token-Abruf:", err);
+  }
+
+  // URL bereinigen
   window.history.replaceState({}, document.title, "/TopTrackz/");
 }
 
@@ -334,4 +357,3 @@ function playSong() {
 </script>
 </body>
 </html>
-
