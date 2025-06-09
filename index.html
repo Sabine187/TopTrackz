@@ -167,7 +167,153 @@
   </div>
 
   <script>
-    // Spotify Auth (PKCE) + Spielcode kommt hier ...
-  </script>
+const CLIENT_ID = "9fb9db7417034d34971b1defb719cdc8";
+const REDIRECT_URI = "https://sabine187.github.io/TopTrackz/";
+const SCOPES = "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state playlist-read-private playlist-read-collaborative";
+
+async function generateCodeVerifier(length = 128) {
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let text = '';
+  for (let i = 0; i < length; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
+async function generateCodeChallenge(codeVerifier) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(codeVerifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+async function startSpotifyLogin(event) {
+  event.stopPropagation();
+  const codeVerifier = await generateCodeVerifier();
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
+  localStorage.setItem("code_verifier", codeVerifier);
+  const args = new URLSearchParams({
+    response_type: "code",
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    redirect_uri: REDIRECT_URI,
+    code_challenge_method: "S256",
+    code_challenge: codeChallenge
+  });
+  window.location = `https://accounts.spotify.com/authorize?${args}`;
+}
+
+async function handleRedirect() {
+  const code = new URLSearchParams(window.location.search).get("code");
+  if (!code) return;
+  const codeVerifier = localStorage.getItem("code_verifier");
+  const body = new URLSearchParams({
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: REDIRECT_URI,
+    client_id: CLIENT_ID,
+    code_verifier: codeVerifier
+  });
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body
+  });
+  const data = await res.json();
+  localStorage.setItem("spotify_access_token", data.access_token);
+  window.history.replaceState({}, document.title, "/TopTrackz/");
+}
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let players = [];
+let scores = {};
+let current = 0;
+
+function startSingleplayer() {
+  players = ["Du"];
+  scores = {"Du": 0};
+  current = 0;
+  updateGameScreen();
+  goTo('gameScreen');
+}
+
+function startMultiplayer() {
+  players = [];
+  for (let i = 1; i <= 5; i++) {
+    const val = document.getElementById("p"+i).value.trim();
+    if (val) players.push(val);
+  }
+  if (players.length === 0) return alert("Mindestens ein Spielername ist nötig");
+  players.forEach(p => scores[p] = 0);
+  current = 0;
+  updateGameScreen();
+  goTo('gameScreen');
+}
+
+function answer(correct) {
+  const p = players[current];
+  if (correct) scores[p]++;
+  current = (current + 1) % players.length;
+  updateGameScreen();
+}
+
+function updateGameScreen() {
+  document.getElementById("currentPlayer").textContent = players[current] + " ist dran";
+  document.getElementById("scoreDisplay").textContent = "Punkte: " + scores[players[current]];
+}
+
+function showScoreTable() {
+  const table = document.getElementById("scoreList");
+  table.innerHTML = "<tr><th>Spieler</th><th>Punkte</th></tr>" + players.map(p => `<tr><td>${p}</td><td>${scores[p]}</td></tr>`).join('');
+  document.getElementById("score-table").style.display = "flex";
+}
+
+function hideScoreTable() {
+  document.getElementById("score-table").style.display = "none";
+}
+
+function playSong() {
+  const token = localStorage.getItem("spotify_access_token");
+  if (!token) return alert("Bitte zuerst mit Spotify verbinden.");
+  const playlists = [
+    "37i9dQZF1DX4TiN7pMwV0Z",
+    "37i9dQZF1DWXRqgorJj26U",
+    "37i9dQZF1DX4o1oenSJRJd",
+    "37i9dQZF1DX4UtSsGT1Sbe"
+  ];
+  const selected = playlists[Math.floor(Math.random() * playlists.length)];
+  fetch(`https://api.spotify.com/v1/playlists/${selected}/tracks`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(res => res.json())
+    .then(data => {
+      const tracks = data.items.filter(i => i.track && i.track.uri);
+      const uri = tracks[Math.floor(Math.random() * tracks.length)].track.uri;
+      return fetch("https://api.spotify.com/v1/me/player/devices", {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json()).then(devs => {
+        const active = devs.devices.find(d => d.is_active);
+        if (!active) return alert("Öffne Spotify auf einem Gerät");
+        return fetch("https://api.spotify.com/v1/me/player/play?device_id=" + active.id, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ uris: [uri] })
+        });
+      });
+    });
+}
+
+window.onload = handleRedirect;
+</script>
 </body>
 </html>
