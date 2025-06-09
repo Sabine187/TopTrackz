@@ -293,42 +293,43 @@ function playSong() {
     "37i9dQZF1DX4UtSsGT1Sbe"
   ];
   const selected = playlists[Math.floor(Math.random() * playlists.length)];
+  console.log("Zufällige Playlist:", selected);
+
   fetch(`https://api.spotify.com/v1/playlists/${selected}/tracks`, {
     headers: { Authorization: `Bearer ${token}` }
   })
     .then(res => res.json())
     .then(data => {
       const tracks = data.items.filter(i => i.track && i.track.uri);
-      const uri = tracks[Math.floor(Math.random() * tracks.length)].track.uri;
+      if (tracks.length === 0) return console.warn("Keine gültigen Tracks gefunden");
+      const chosen = tracks[Math.floor(Math.random() * tracks.length)].track.uri;
+      console.log("Wähle Track:", chosen);
       return fetch("https://api.spotify.com/v1/me/player/devices", {
         headers: { Authorization: `Bearer ${token}` }
-      }).then(r => r.json()).then(devs => {
-        const active = devs.devices.find(d => d.is_active);
-        if (!active) return alert("Öffne Spotify auf einem Gerät");
-        return fetch("https://api.spotify.com/v1/me/player/play?device_id=" + active.id, {
-          method: "PUT",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ uris: [uri] })
+      })
+        .then(r => r.json())
+        .then(devs => {
+          const active = devs.devices.find(d => d.is_active);
+          if (!active) return alert("Kein aktives Gerät gefunden. Starte Spotify auf deinem Handy oder PC.");
+          console.log("Aktives Gerät:", active.name);
+          return fetch("https://api.spotify.com/v1/me/player/play?device_id=" + active.id, {
+            method: "PUT",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ uris: [chosen] })
+          })
+            .then(response => {
+              if (!response.ok) {
+                console.error("Fehler beim Abspielen:", response.statusText);
+              } else {
+                console.log("Song erfolgreich gestartet ✅");
+              }
+            });
         });
-      });
-    });
-}
-
-window.onload = async function() {
-  await handleRedirect();
-  const token = localStorage.getItem("spotify_access_token");
-  document.getElementById("debug-token").textContent = token ? "Token: ✅" : "Token: ❌";
-  if (token) {
-    const res = await fetch("https://api.spotify.com/v1/me/player/devices", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await res.json();
-    const active = data.devices.find(d => d.is_active);
-    document.getElementById("debug-device").textContent = active ? `Device: ✅ (${active.name})` : "Device: ❌ Nicht aktiv";
-  }
+    })
+    .catch(err => console.error("Fehler beim Laden der Playlist oder beim Abspielen:", err));
 };
 </script>
 </body>
